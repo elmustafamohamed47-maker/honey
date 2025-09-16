@@ -64,7 +64,7 @@ def load_or_train_model(df):
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-    model = xgb.XGBRegressor(
+    xgb_model = xgb.XGBRegressor(
         n_estimators=500,
         learning_rate=0.05,
         max_depth=6,
@@ -184,6 +184,7 @@ def predict_weight_streamlit(model, X):
         st.success(f"🤖 Predicted Hive Weight: {prediction:.2f} kg")
         
 predict_weight_streamlit(xgb_model, X)
+
 
 
 
