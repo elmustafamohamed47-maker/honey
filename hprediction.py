@@ -12,8 +12,9 @@ import warnings
 warnings.filterwarnings('ignore')
 
 # Load data
-url = "https://docs.google.com/spreadsheets/d/1_lAYvZlLdbPHFG24ZTA7WyFJB9n2_CB-/edit?usp=drive_link&ouid=116531243222801179904&rtpof=true&sd=true"
-df = pd.read_excel(url)
+uploaded_file = st.file_uploader("Upload your Excel file", type=["xlsx"])
+if uploaded_file is not None:
+    df = pd.read_excel(uploaded_file)
 
 
 # Data preprocessing and feature engineering
@@ -253,3 +254,4 @@ def predict_weight(model, scaler=None):
 
 
 predict_weight(xgb_model)
+
