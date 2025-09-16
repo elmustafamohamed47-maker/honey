@@ -12,7 +12,7 @@ import warnings
 warnings.filterwarnings('ignore')
 
 # Load data
-pd.read_excel("intern.xlsx")
+df = pd.read_excel("intern.xlsx")
 
 
 # Data preprocessing and feature engineering
@@ -252,6 +252,7 @@ def predict_weight(model, scaler=None):
 
 
 predict_weight(xgb_model)
+
 
 
 
