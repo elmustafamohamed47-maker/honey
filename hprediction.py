@@ -12,7 +12,9 @@ import warnings
 warnings.filterwarnings('ignore')
 
 # Load data
-df = pd.read_excel("intern.xlsx")
+url = "https://docs.google.com/spreadsheets/d/1_lAYvZlLdbPHFG24ZTA7WyFJB9n2_CB-/edit?usp=drive_link&ouid=116531243222801179904&rtpof=true&sd=true"
+df = pd.read_excel(url)
+
 
 # Data preprocessing and feature engineering
 def preprocess_data(df):
@@ -248,5 +250,6 @@ def predict_weight(model, scaler=None):
     
     print(f"🤖 PREDICTED HIVE WEIGHT: {prediction:.2f} kg")
     return prediction
+
 
 predict_weight(xgb_model)
