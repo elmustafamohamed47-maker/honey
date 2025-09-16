@@ -11,7 +11,6 @@ from catboost import CatBoostRegressor
 import warnings
 warnings.filterwarnings('ignore')
 
-# Load data
 import pandas as pd
 import streamlit as st
 
@@ -20,8 +19,20 @@ st.title("🐝 Honey Prediction App")
 uploaded_file = st.file_uploader("Upload your Excel file", type=["xlsx"])
 
 if uploaded_file is not None:
-    df = pd.read_excel(uploaded_file)
-    st.write("✅ Data Preview:", df.head())
+    try:
+        # Read the uploaded Excel file
+        df = pd.read_excel(uploaded_file)
+        st.success("✅ File uploaded successfully!")
+        st.write("Preview of data:", df.head())
+
+        # Add your model prediction function here
+        # prediction = model.predict(...)
+        # st.write("📡 Prediction:", prediction)
+
+    except Exception as e:
+        st.error(f"❌ Error reading file: {e}")
+else:
+    st.info("Please upload an Excel file to continue.")
 
 
 
@@ -262,6 +273,8 @@ def predict_weight(model, scaler=None):
 
 
 predict_weight(xgb_model)
+
+
 
 
 
