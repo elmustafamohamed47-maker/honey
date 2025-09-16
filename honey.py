@@ -115,23 +115,72 @@ with open("xgb_model.pkl", "rb") as f:
     model = pickle.load(f)
 
 # Live prediction function
-def live_predict_xgb(model):
-    # Ask for input
-    temp = float(input("🌡 Enter temperature: "))
-    hum = float(input("💧 Enter humidity: "))
+import streamlit as st
+import numpy as np
+import pandas as pd
+from datetime import datetime
 
-    # Example: simple engineered features
-    thi = temp - (0.55 - 0.0055 * hum) * (temp - 14.5)   # Temperature-Humidity Index
-    heat_index = -8.784695 + 1.61139411*temp + 2.338549*hum - 0.14611605*temp*hum
-    comfort = thi - temp * 0.1   # dummy formula (replace with yours)
+def predict_weight_streamlit(model, X):
+    """
+    Streamlit function to predict hive weight based on user input
+    """
+    st.subheader("🐝 Enter Hive Parameters")
 
-    # Build input array (must match training features!)
-    features = np.array([[hum, temp, thi, 0, heat_index, comfort, 0, 0]])  # light, it, ratio dummy=0
+    # User inputs
+    temperature = st.number_input("🌡️ Temperature (°C):", value=25.0, min_value=-20.0, max_value=50.0)
+    humidity = st.number_input("💧 Humidity (%):", value=50.0, min_value=0.0, max_value=100.0)
+    hour = st.slider("⏱️ Hour of day:", 0, 23, 12)
+    day_of_week = st.slider("📅 Day of week (0=Mon, 6=Sun):", 0, 6, 2)
+    month = st.slider("📆 Month (1-12):", 1, 12, 6)
 
-    # Predict
-    prediction = model.predict(features)[0]
-    print(f"📡 Predicted hive weight: {prediction:.2f} kg")
-    return prediction
+    # Derived features
+    thi = 0.8 * temperature + (temperature * humidity) / 500
+    light = 100 if (hour > 6) and (hour < 18) else 0
+    heat_index = temperature + 0.5 * humidity
+    comfort = 70 - abs(temperature - 22) - 0.2 * abs(humidity - 50)
+    it = 25.0
+    ratio = temperature / (humidity + 1)
 
-# Run it
-live_predict_xgb(model)
+    # Cyclical features
+    hour_sin = np.sin(2 * np.pi * hour / 24)
+    hour_cos = np.cos(2 * np.pi * hour / 24)
+    month_sin = np.sin(2 * np.pi * month / 12)
+    month_cos = np.cos(2 * np.pi * month / 12)
+
+    # Day of year
+    day_of_year = datetime.now().timetuple().tm_yday
+
+    # Build input data
+    input_data = {
+        'humidity': [humidity],
+        'temperature': [temperature],
+        'thi': [thi],
+        'light': [light],
+        'heat_index': [heat_index],
+        'comfort': [comfort],
+        'it': [it],
+        'ratio': [ratio],
+        'hour': [hour],
+        'day_of_week': [day_of_week],
+        'month': [month],
+        'day_of_year': [day_of_year],
+        'hour_sin': [hour_sin],
+        'hour_cos': [hour_cos],
+        'month_sin': [month_sin],
+        'month_cos': [month_cos]
+    }
+
+    # Add missing lag/rolling features as 0
+    for col in X.columns:
+        if col not in input_data:
+            input_data[col] = [0]
+
+    # Create DataFrame with correct column order
+    input_df = pd.DataFrame(input_data)[X.columns]
+
+    # Predict when button clicked
+    if st.button("🔮 Predict Hive Weight"):
+        prediction = model.predict(input_df)[0]
+        st.success(f"🤖 Predicted Hive Weight: {prediction:.2f} kg")
+
+
