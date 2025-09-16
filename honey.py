@@ -182,5 +182,8 @@ def predict_weight_streamlit(model, X):
     if st.button("🔮 Predict Hive Weight"):
         prediction = model.predict(input_df)[0]
         st.success(f"🤖 Predicted Hive Weight: {prediction:.2f} kg")
+        
+predict_weight_streamlit(xgb_model, X)
+
 
 
