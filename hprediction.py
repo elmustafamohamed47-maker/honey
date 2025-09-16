@@ -12,9 +12,7 @@ import warnings
 warnings.filterwarnings('ignore')
 
 # Load data
-uploaded_file = st.file_uploader("Upload your Excel file", type=["xlsx"])
-if uploaded_file is not None:
-    df = pd.read_excel(uploaded_file)
+pd.read_excel(intern.xlsx)
 
 
 # Data preprocessing and feature engineering
@@ -254,4 +252,5 @@ def predict_weight(model, scaler=None):
 
 
 predict_weight(xgb_model)
+
 
