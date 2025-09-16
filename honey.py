@@ -106,3 +106,32 @@ if uploaded_file is not None:
     st.write("📊 Latest Prediction:", preds[-1])
 else:
     st.info("Upload an Excel file to start.")
+
+import numpy as np
+import pickle
+
+# Load the trained model
+with open("xgb_model.pkl", "rb") as f:
+    model = pickle.load(f)
+
+# Live prediction function
+def live_predict_xgb(model):
+    # Ask for input
+    temp = float(input("🌡 Enter temperature: "))
+    hum = float(input("💧 Enter humidity: "))
+
+    # Example: simple engineered features
+    thi = temp - (0.55 - 0.0055 * hum) * (temp - 14.5)   # Temperature-Humidity Index
+    heat_index = -8.784695 + 1.61139411*temp + 2.338549*hum - 0.14611605*temp*hum
+    comfort = thi - temp * 0.1   # dummy formula (replace with yours)
+
+    # Build input array (must match training features!)
+    features = np.array([[hum, temp, thi, 0, heat_index, comfort, 0, 0]])  # light, it, ratio dummy=0
+
+    # Predict
+    prediction = model.predict(features)[0]
+    print(f"📡 Predicted hive weight: {prediction:.2f} kg")
+    return prediction
+
+# Run it
+live_predict_xgb(model)
