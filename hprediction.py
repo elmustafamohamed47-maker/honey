@@ -12,7 +12,17 @@ import warnings
 warnings.filterwarnings('ignore')
 
 # Load data
-df = pd.read_excel("intern.xlsx")
+import pandas as pd
+import streamlit as st
+
+st.title("🐝 Honey Prediction App")
+
+uploaded_file = st.file_uploader("Upload your Excel file", type=["xlsx"])
+
+if uploaded_file is not None:
+    df = pd.read_excel(uploaded_file)
+    st.write("✅ Data Preview:", df.head())
+
 
 
 # Data preprocessing and feature engineering
@@ -252,6 +262,7 @@ def predict_weight(model, scaler=None):
 
 
 predict_weight(xgb_model)
+
 
 
 
