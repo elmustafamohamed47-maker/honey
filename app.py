@@ -11,9 +11,9 @@ from io import BytesIO
 @st.cache_resource
 def load_bundle():
     bundle = joblib.load("xgb_model.pkl")   # dict {'model': ..., 'scaler': ...}
-    return bundle["model"], bundle["scaler"]
+    return bundle["model"]
 
-model, scaler = load_bundle()
+model = load_bundle()
 EXPECTED = scaler.feature_names_in_   # list of derived feature names
 
 # --------------------------------------------------
