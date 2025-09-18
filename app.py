@@ -2,32 +2,70 @@
 import streamlit as st
 import pandas as pd
 import joblib
+import numpy as np
+from io import BytesIO
 
+# --------------------------------------------------
+# 1. LOAD MODEL + SCALER
+# --------------------------------------------------
 @st.cache_resource
-def load_model():
-    return joblib.load("xgb_model.pkl")   # single XGBClassifier object
+def load_bundle():
+    bundle = joblib.load("xgb_model.pkl")   # dict {'model': ..., 'scaler': ...}
+    return bundle["model"], bundle["scaler"]
 
-model = load_model()
-expected_cols = model.get_booster().feature_names   # XGBoost native list
+model, scaler = load_bundle()
+EXPECTED = scaler.feature_names_in_   # list of derived feature names
 
-st.title("🍯 Honey Authenticity Predictor")
-uploaded = st.file_uploader("Choose Excel file", type=["xlsx"])
-if uploaded:
-    df = pd.read_excel(uploaded)
+# --------------------------------------------------
+# 2. FEATURE ENGINEERING (exactly like training)
+# --------------------------------------------------
+def engineer(df_raw: pd.DataFrame) -> pd.DataFrame:
+    df = df_raw.copy()
 
-    missing = set(expected_cols) - set(df.columns)
+    # ensure datetime
+    df["recordedAt"] = pd.to_datetime(df["recordedAt"])
+
+    # ---- time-based ----
+    df["hour"] = df["recordedAt"].dt.hour
+    df["day_of_week"] = df["recordedAt"].dt.dayofweek
+    df["month"] = df["recordedAt"].dt.month
+    df["day_of_year"] = df["recordedAt"].dt.dayofyear
+
+    # ---- cyclical ----
+    df["hour_sin"] = np.sin(2 * np.pi * df["hour"] / 24)
+    df["hour_cos"] = np.cos(2 * np.pi * df["hour"] / 24)
+    df["month_sin"] = np.sin(2 * np.pi * df["month"] / 12)
+    df["month_cos"] = np.cos(2 * np.pi * df["month"] / 12)
+
+    # ---- lags ----
+    for lag in [1, 2, 3, 6, 12, 24]:
+        df[f"temperature_lag_{lag}"] = df["temperature"].shift(lag)
+        df[f"humidity_lag_{lag}"] = df["humidity"].shift(lag)
+
+    # ---- rolling stats ----
+    for window in [3, 6, 12, 24]:
+        df[f"temperature_rolling_mean_{window}"] = (
+            df["temperature"].rolling(window=window).mean()
+        )
+        df[f"humidity_rolling_mean_{window}"] = (
+            df["humidity"].rolling(window=window).mean()
+        )
+        df[f"temperature_rolling_std_{window}"] = (
+            df["temperature"].rolling(window=window).std()
+        )
+        df[f"humidity_rolling_std_{window}"] = (
+            df["humidity"].rolling(window=window).std()
+        )
+
+    # ---- diffs ----
+    df["temperature_diff"] = df["temperature"].diff()
+    df["humidity_diff"] = df["humidity"].diff()
+
+    # ---- interaction ----
+    df["temp_humidity_interaction"] = df["temperature"] * df["humidity"]
+
+    # ---- keep only what the model saw ----
+    missing = [c for c in EXPECTED if c not in df.columns]
     if missing:
-        st.error(f"Missing columns: {', '.join(missing)}")
-        st.stop()
-
-    X = df[expected_cols]
-    preds = model.predict(X)
-    proba = model.predict_proba(X)[:, 1]
-
-    out = df.copy()
-    out["prediction"] = preds
-    out["prob_real"]  = proba.round(3)
-    st.dataframe(out)
-
-    csv = out.to_csv(index=False).encode()
-    st.download_button("Download results", csv, "predictions.csv", "text/csv")
+        raise ValueError(f"Missing derived columns: {missing}")
+    return df[EXPECTED]
