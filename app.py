@@ -8,8 +8,8 @@ st.set_page_config(page_title="🐝 Honey Authenticity Checker", layout="centere
 # ------------- LOAD PRE-TRAINED PIPELINE -------------
 @st.cache_resource
 def load_model():
-    bundle = joblib.load("xgb_model.pkl")   # dict {model:..., scaler:...}
-    return bundle["model"], bundle["scaler"]
+    # xgb_model.pkl contains ONLY the trained model
+    return joblib.load("xgb_model.pkl")
 
 model, scaler = load_model()
 expected_cols = scaler.feature_names_in_
