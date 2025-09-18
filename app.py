@@ -9,12 +9,11 @@ from io import BytesIO
 # 1. LOAD MODEL + SCALER
 # --------------------------------------------------
 @st.cache_resource
-def load_bundle():
-    bundle = joblib.load("xgb_model.pkl")   # dict {'model': ..., 'scaler': ...}
-    return bundle["model"]
+def load_model():
+    return joblib.load("xgb_model.pkl")
 
-model = load_bundle()
-EXPECTED = scaler.feature_names_in_   # list of derived feature names
+model = load_model()
+# if you also need a separate scaler, load it the same way or re-save together # list of derived feature names
 
 # --------------------------------------------------
 # 2. FEATURE ENGINEERING (exactly like training)
