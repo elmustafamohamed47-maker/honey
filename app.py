@@ -11,7 +11,7 @@ def load_model():
     # xgb_model.pkl contains ONLY the trained model
     return joblib.load("xgb_model.pkl")
 
-model, scaler = load_model()
+model = load_model()
 expected_cols = scaler.feature_names_in_
 
 # ------------- UI -------------
