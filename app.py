@@ -45,7 +45,7 @@ month_cos = np.cos(2 * np.pi * month / 12)
 
 day_of_year = datetime.now().timetuple().tm_yday
 
-# Build input dataframe (columns must match training)
+# Base features
 input_data = {
     'humidity': [humidity],
     'temperature': [temperature],
@@ -65,7 +65,14 @@ input_data = {
     'month_cos': [month_cos]
 }
 
-input_df = pd.DataFrame(input_data)
+# Add missing lag/rolling/diff/interaction features with 0
+expected_features = model.get_booster().feature_names
+for feat in expected_features:
+    if feat not in input_data:
+        input_data[feat] = [0]
+
+# Build DataFrame in correct order
+input_df = pd.DataFrame(input_data)[expected_features]
 
 # ===============================
 # Prediction
@@ -73,3 +80,4 @@ input_df = pd.DataFrame(input_data)
 if st.button("🔮 Predict Hive Weight"):
     prediction = model.predict(input_df)[0]
     st.success(f"🤖 Predicted Hive Weight: {prediction:.2f} kg")
+
